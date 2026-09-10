@@ -26,12 +26,20 @@ rows=[
 ('豚肉のあったかうどん',15,'冷凍うどん|3玉;豚薄切り肉|約300g|1パック;小松菜|1束','めんつゆ 適量','小松菜を4cm幅に切る。;めんつゆを表示のかけつゆの割合で薄め、3人分を煮立てる。;豚肉と小松菜を入れ、肉の中心まで火を通す。;うどんを入れて袋の表示時間煮る。','豚肉,小麦'),
 ('豆腐と卵のとろみ煮',15,'絹ごし豆腐|2丁;卵|3個;小松菜|1束','鶏ガラスープの素 小さじ2、醤油 小さじ2、片栗粉 大さじ1','豆腐と小松菜を食べやすく切る。;鍋に水400mlと鶏ガラスープの素を煮立て、豆腐と小松菜を入れて煮る。;醤油と、水大さじ2で溶いた片栗粉を加えて煮立てる。;溶き卵を回し入れ、全体が固まるまで加熱する。','豆腐,大豆,卵'),
 ('豚肉とえのきのレンジ蒸し',20,'豚薄切り肉|約350g|1パック;えのき|1袋;もやし|1袋','ポン酢 大さじ3','えのきの根元を切り、ほぐす。;耐熱皿にもやしとえのきを広げ、豚肉を重なりすぎないようにのせる。;ふんわりラップをかけ、600Wで8分加熱。肉をほぐして上下を返し、中心まで火が通るまで1分ずつ追加加熱する。;ポン酢をかける。','豚肉,きのこ,酸っぱい')]
+from extra_menus import rows as extra_rows
+rows.extend(extra_rows)
 menus=[]
 for i,(name,time,items,season,steps,tags) in enumerate(rows):
     ingredients=[]
     for item in items.split(';'):
         p=item.split('|');ingredients.append(dict(name=p[0],amount=p[1],**({'package':p[2]} if len(p)>2 else {})))
     menus.append(dict(id=f'menu_{i+1:02}',name=name,time=time,difficulty='very_easy' if time<=15 else 'easy',servings=3,ingredients=ingredients,seasonings=season.split('、'),tags=list(set(tags.split(',')+[x['name'] for x in ingredients]+[x.split(' ')[0] for x in season.split('、')])),steps=steps.split(';'),note='お肉やお魚は1パック使い切り。分量は少し前後しても大丈夫。' if any(x.get('package')=='1パック' for x in ingredients) else '身近な材料で、気負わず作れるわが家の夕飯。'))
+for m in menus:
+    if '炊き込みご飯' in m['name']:
+        m['totalTime']=70
+        m['note']='準備約10分、炊飯・浸水を含め約70分。機種で前後します。汁物や冷ややっこを添えても。'
+existing=json.loads((root/'data/menus.json').read_text(encoding='utf-8'))
+menus[:24]=existing[:24]
 (root/'data/menus.json').write_text(json.dumps(menus,ensure_ascii=False,indent=2),encoding='utf-8')
 (root/'data/fruits.json').write_text(json.dumps([dict(name='バナナ',amount='3本',season='all',prep='皮をむくだけ。食べたい分だけどうぞ。'),dict(name='りんご',amount='1〜2個',season='autumn',prep='洗って、食べやすい大きさに切って。'),dict(name='みかん',amount='3個',season='winter',prep='手でむくだけ。季節の果物に替えてもOK。')],ensure_ascii=False,indent=2),encoding='utf-8')
 from PIL import Image,ImageDraw,ImageFont
