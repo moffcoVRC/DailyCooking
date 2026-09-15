@@ -39,7 +39,9 @@ for m in menus:
         m['totalTime']=70
         m['note']='準備約10分、炊飯・浸水を含め約70分。機種で前後します。汁物や冷ややっこを添えても。'
 existing=json.loads((root/'data/menus.json').read_text(encoding='utf-8'))
-menus[:24]=existing[:24]
+existing_by_id={m['id']:m for m in existing}
+menus=[existing_by_id.get(m['id'],m) for m in menus]
+menus.extend(m for m in existing if m['id'] not in {x['id'] for x in menus})
 (root/'data/menus.json').write_text(json.dumps(menus,ensure_ascii=False,indent=2),encoding='utf-8')
 (root/'data/fruits.json').write_text(json.dumps([dict(name='バナナ',amount='3本',season='all',prep='皮をむくだけ。食べたい分だけどうぞ。'),dict(name='りんご',amount='1〜2個',season='autumn',prep='洗って、食べやすい大きさに切って。'),dict(name='みかん',amount='3個',season='winter',prep='手でむくだけ。季節の果物に替えてもOK。')],ensure_ascii=False,indent=2),encoding='utf-8')
 from PIL import Image,ImageDraw,ImageFont
