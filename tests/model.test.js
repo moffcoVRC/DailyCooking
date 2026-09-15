@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
-import {initialState,ensurePlan,migrateState,eat,addDay,monday,FIXED_NG,matches} from '../dist/model.js';
+import {initialState,ensurePlan,migrateState,eat,addDay,monday,mainIngredient,FIXED_NG,matches} from '../dist/model.js';
 const menus=JSON.parse(readFileSync(new URL('../dist/data/menus.json',import.meta.url)));
 const week=(s,d,list=menus)=>Array.from({length:7},(_,i)=>ensurePlan(s,addDay(monday(d),i),list).menuId);
 test('52 weeks have seven unique allowed dishes and no adjacent repeats',()=>{const s=initialState();let previous;for(let w=0;w<52;w++){const ids=week(s,addDay('2026-09-14',w*7));assert.equal(new Set(ids).size,7);assert.notEqual(ids[0],previous);previous=ids[6];for(const id of ids){const m=menus.find(m=>m.id===id);assert.ok(!FIXED_NG.some(t=>matches(m,t)));}}});
@@ -13,3 +13,6 @@ test('NG change rebuilds whole week without stale ingredient checks',()=>{const 
 test('cannot replace historical dish silently after rebuilding',()=>{const s=initialState();ensurePlan(s,'2026-09-01',menus);s.history['2026-09-01']={menuId:'different',rating:'like'};assert.throws(()=>eat(s,'2026-09-01'));});
 test('pass controls and handlers removed',()=>{for(const f of ['dist/app.js','dist/index.html','dist/model.js'])assert.ok(!/skipDay|data-skip|skip-form|skip-dialog/.test(readFileSync(f,'utf8')));});
 test('static assets, PWA and 56 complete recipes',()=>{assert.equal(menus.length,56);assert.equal(new Set(menus.map(m=>m.id)).size,56);for(const m of menus){assert.ok(m.time<=30);assert.ok(m.steps.length<=5);assert.equal(m.servings,3);assert.ok(m.ingredients.length&&m.tags.length);}const manifest=JSON.parse(readFileSync('dist/manifest.json'));for(const i of manifest.icons)assert.ok(existsSync('dist/'+i.src));for(const name of ['index.html','app.js','model.js','style.css','service-worker.js','data/menus.json','data/fruits.json'])assert.ok(existsSync('dist/'+name));});
+
+test('primary ingredient never repeats across 52 weeks and beef appears once per fortnight',()=>{const s=initialState();let previous;for(let w=0;w<52;w++){const ids=week(s,addDay('2026-09-14',w*7));const groups=ids.map(id=>mainIngredient(menus.find(m=>m.id===id)));for(const group of groups){assert.notEqual(group,previous);previous=group;}assert.equal(groups.filter(g=>g==='beef').length,w%2);}});
+test('ingredient rotation still respects exclusions over week boundaries',()=>{const s=initialState();s.family[0].ng=['牛肉','豚肉'];let previous;for(let w=0;w<10;w++){const ids=week(s,addDay('2026-09-14',w*7));for(const id of ids){if(!id){previous=undefined;continue;}const group=mainIngredient(menus.find(m=>m.id===id));assert.notEqual(group,previous);assert.ok(!['beef','pork'].includes(group));previous=group;}}});
