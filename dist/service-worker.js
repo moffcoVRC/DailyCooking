@@ -1,5 +1,5 @@
-const CACHE='mainichi-dinner-v5';
-const FILES=['./','./index.html','./style.css','./app.js','./model.js','./app.js?v=20260915-5','./model.js?v=20260915-5','./data/menus.json','./data/fruits.json','./data/menus.json?v=20260915-5','./data/fruits.json?v=20260915-5','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='mainichi-dinner-v6';
+const FILES=['./','./index.html','./style.css','./app.js','./model.js','./app.js?v=20260915-6','./model.js?v=20260915-6','./data/menus.json','./data/fruits.json','./data/menus.json?v=20260915-6','./data/fruits.json?v=20260915-6','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES.map(url=>new Request(url,{cache:'reload'})))).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('mainichi-dinner-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',event=>{if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;event.respondWith(fetch(event.request,{cache:'no-cache'}).then(response=>response).catch(()=>caches.match(event.request,{ignoreSearch:true}).then(cached=>cached||Response.error())));});
